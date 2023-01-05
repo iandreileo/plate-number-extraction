@@ -2,6 +2,12 @@ import math
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from skimage.measure import label, regionprops
+import matplotlib.patches as mpatches
+from scipy.spatial.distance import euclidean
+import imutils
+import calendar
+import time
 
 def convolution(image, kernel, average=False):
 
@@ -48,6 +54,7 @@ def sobel_edge_detection(image, xfilter, yfilter):
 def dnorm(x, mu, sd):
     return 1 / (np.sqrt(2 * np.pi) * sd) * np.e ** (-np.power((x - mu) / sd, 2) / 2)
 
+
 def gaussian_kernel(size, sigma=1):
     kernel_1D = np.linspace(-(size // 2), size // 2, size)
     for i in range(size):
@@ -64,10 +71,10 @@ def gaussian_blur(image, kernel_size):
 
 def main():
     # Citim poza
-    img = cv2.imread('poze/test2.jpg')
-
+    img = cv2.imread('poze/test3.jpg')
+    
     # Aplicam filtru de grayscale
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Declaram filtrele ca in labul de SPG
     xfilter = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
@@ -75,19 +82,28 @@ def main():
 
     # Aplicam filtrul gausian pentru blur
     # Pentru a indeparta "zgomotul"
-    img = gaussian_blur(img, 2)
+    gaussian_image = gaussian_blur(gray_image, 5)
 
     # Facem edge detection folosind sobel de la SPG
     # Cu 2 filtre orizontal si vertical
-    img = sobel_edge_detection(img, xfilter, yfilter)
+    edged_image = sobel_edge_detection(gaussian_image, xfilter, yfilter)
 
     # Inversam culorile din imagine pentru claritate mai buna
-    mask = np.full(img.shape, 255)
-    img = mask - img
-    img = img.astype(np.uint8)
+    # mask = np.full(edged_image.shape, 255)
+    # edged_image = mask - edged_image
+
+    # Vom avea nevoie sa modificam tipul canalelor
+    # Cand vom face etichetare
+    sobel = edged_image.astype(np.uint8)
+
+    
+    # Generam un timestamp ca sa putem salva poza si sa
+    # Vedem diferentele
+    current_GMT = time.gmtime()
+    time_stamp = calendar.timegm(current_GMT)
 
     # Scriem imaginea inapoi in fisier
-    cv2.imwrite("test_rezolvat.jpg", img)
+    cv2.imwrite("test_rezolvat" + str(time_stamp) +".jpg", sobel)
 
 
 if __name__ == "__main__":
