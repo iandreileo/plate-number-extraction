@@ -14,6 +14,8 @@ from scipy.spatial import distance
 from imutils import grab_contours
 import pytesseract
 from PIL import Image
+from numpy import dot, exp, mgrid, pi, ravel, square, uint8, zeros
+from itertools import product
 
 
 
@@ -23,12 +25,57 @@ class Canny:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return image
 
+    # def grayscale(self, image):
+    #     for i in range(image.shape[0]):
+    #         for j in range(image.shape[1]):
+    #             (r,g,b) = image[i][j]
+
+    #             gray = (r * 0.299 + g * 0.587 + b * 0.114)
+
+    #             image[i][j] = (gray, gray, gray)
+
+    #     image = image.astype('uint8')
+    #     return image
+
+
+    def gen_gaussian_kernel(self, k_size, sigma):
+        center = k_size // 2
+        x, y = mgrid[0 - center : k_size - center, 0 - center : k_size - center]
+        g = 1 / (2 * pi * sigma) * exp(-(square(x) + square(y)) / (2 * square(sigma)))
+        return g
+
+
+    def gaussian_filter(self, image, k_size, sigma):
+        height, width = image.shape[0], image.shape[1]
+        # dst image height and width
+        dst_height = height - k_size + 1
+        dst_width = width - k_size + 1
+
+        # im2col, turn the k_size*k_size pixels into a row and np.vstack all rows
+        image_array = zeros((dst_height * dst_width, k_size * k_size))
+        row = 0
+        for i, j in product(range(dst_height), range(dst_width)):
+            window = ravel(image[i : i + k_size, j : j + k_size])
+            image_array[row, :] = window
+            row += 1
+
+        #  turn the kernel into shape(k*k, 1)
+        gaussian_kernel = self.gen_gaussian_kernel(k_size, sigma)
+        filter_array = ravel(gaussian_kernel)
+
+        # reshape and get the dst image
+        dst = dot(image_array, filter_array).reshape(dst_height, dst_width).astype(uint8)
+
+        return dst
+
     def blur(self, image):
-        image = cv2.GaussianBlur(image, (5, 5), 0)
+        # image = cv2.GaussianBlur(image, (5, 5), 0)
+        image = self.gaussian_filter(image, 5, sigma=0.8)
+
         return image
 
     def sobel(self, image):
-        image = self.grayscale(self.blur(image))
+        image = self.blur(self.grayscale(image))
         convolved = np.zeros(image.shape)
         G_x = np.zeros(image.shape)
         G_y = np.zeros(image.shape)
@@ -53,6 +100,7 @@ class Canny:
         suppressed = np.zeros(size)
         for i in range(1, size[0] - 1):
             for j in range(1, size[1] - 1):
+                # print(angles[i,j])
                 if (0 <= angles[i, j] < 22.5) or (157.5 <= angles[i, j] <= 180):
                     value_to_compare = max(image[i, j - 1], image[i, j + 1])
                 elif (22.5 <= angles[i, j] < 67.5):
