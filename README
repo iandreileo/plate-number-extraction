@@ -1,0 +1,43 @@
+PROIECT SPG & PS
+Extragerea numerelor de inmatriculare dintr-o poza
+- Implementare folosind metoda Canny -
+
+Proiect realizat de: Ilie Andrei-Leonard si Mihaila Cosmin 342C4
+
+
+	Tema aleasa de catre mine pentru acest proiect a fost - Extragerea numerelor de inmatriculare dintr-o poza, fara a folosi algoritmi de invatarea automata, ci doar prin aplicarea unor filtre si metode specifice Computer Vision.
+
+	Proiectul a inceput cu un research, pentru ca extragerea numarului de inmatriculare se pot folosi mai multe metode - eu am ales Canny Edge Detection. 
+
+	Canny Edge Detection are cativa pasi foarte bine documentati prin intermediul caruia poti ajunge la un produs final conform cerintelor.
+
+	Astfel, conform documentatiei pe care am gasit-o pe Wikipedia (https://en.wikipedia.org/wiki/Canny_edge_detector), dar si prin laboratoarele de la SPG, am reusit sa pun pe foaie pasii algoritmului si apoi sa il implementez in Python.
+
+	Pentru a ajunge la extragerea numarului de inmatriculare am urmarit urmatorii pasi:
+
+Am folosit 2 operatii pentru netezirea imaginii.
+Transformarea imaginii din RGB in Gray-Scale.
+Aplicarea unui blur (Gaussian Blur)
+Odata ce avem imaginea netezita am folosit operatorul Sobel (Filtrul) pentru primul pas ce ne ajuta sa transformam imaginea intr-una conturata. In acest pas se foloseste neaparat o imagine cu gray-scale aplicat si cu blur, iar in baza acesteia se foloseste un gradient orizontal si unul vertical pentru a procesa imaginea.
+Dupa ce avem imaginea procesata folosind filtrul Sobel, va trebui sa trecem la pasii urmatori care ne vor ajuta sa avem o imagine cat mai clara raportat la nevoia noastra. Astfel in acest pas va trebui sa folosim algoritmul Non-Maxima Supression care ne va ajuta sa eliminam portiunile care ne-ar putea pune piedica in pasul urmator. (https://arxiv.org/pdf/1705.02950.pdf)
+In continuare pentru a netezi imaginea si a scoate in evidenta contururile vom aplica double treshold hysteresis care ne va ajuta sa vedem ce pixeli/edges trebuie eliminate din pza astfel incat contururile principale sa ramana cat mai evidente.
+In acest pas suntem in punctul in care putem gasi foarte usor pe poza contururile care ne intereseaza, apoi sa extragem numerele si sa aplicam un algoritm de OCR pe ele. Astfel, abordarea mea in acest punct a fost una destul de nisata in ideea in care am extras din poza toate contururile, le-am sortat descrescator dupa arie si pentru a evita cat mai mult erorile, am filtrat doar primele 20 de contururi.
+Ulterior am trecut prin toate contururile, am testat daca conturul curent este patrulater si daca are ratia potentiala a unui numar de inamtriculare, iar daca respecta conditiile acestea, insemna ca este numar de inmatriculare, asa ca adaugam conturul pe imagine si apelam pyteseract pentru a extrage din acea portiune numarul de inmatriculare.
+
+	Ca o concluzie, pasii atat din teorie, cat si aplicati anterior, sumarizat, au fost:
+Gray-scale;
+Gaussian Blur;
+Sobel Filter;
+Non-Maxima Supression;
+Double Treshold Hysteresis;
+
+	Pentru a avea codul si functiile cat mai lizibile am creat o clasa Canny() care contine metodele care se pot apela si care duc la rezultatul final. 
+
+	Programul primeste prin parametrul “-i” o imagine pe care o va procesa, spre exemplu “python3 main.py - images/imagine.jpg”.
+
+	Proiectul curent nu are acuratete de 100%, iar eficienta lui depinde foarte mult de cum este pozitionat numarul de inmatriculare in poza. Din researchul pe care l-am facut, o metoda mult mai eficienta o reprezinta crearea unui model de invatare automata pe care sa-l antrenezi si sa recunoasca automat numerele de inmatriculare.
+
+	Consider ca proiectul a fost foarte interesant pentru mine si am invatat destul de multe lucruri, documentandu-ma si citind paper-uri despre cum ar trebui implementati pasii mentionati anterior.
+
+
+	Timpul de rulare mediu al algoritmul pe setul de poze pe care l-am pregatit este de ±7s.
