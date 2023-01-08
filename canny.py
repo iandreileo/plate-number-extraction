@@ -202,7 +202,6 @@ class Canny:
         return image
 
     def ocr(self, ROI):
-
         nr_inmatriculare = pytesseract.image_to_string(ROI)
         return nr_inmatriculare
 
@@ -221,7 +220,6 @@ class Canny:
                 x,y,w,h = cv2.boundingRect(count)
                 ROI = image[y:y+h, x:x+w]
 
-                # TODO: De pus o conditie de ratia rectangulara
                 if show:
                     cv2.imshow('INMATRICULARE',ROI)
                     cv2.waitKey()
@@ -236,7 +234,7 @@ class Canny:
         
         #displaying the resulting image as the output on the screen
         if show:
-            cv2.imshow("Resulting_image", image)
+            cv2.imshow("IMAGINE MAPATA", image)
             cv2.waitKey(0)
 
         return nr_inmatriculare
