@@ -1,41 +1,19 @@
-import cv2
-import os
-import numpy as np
 import numpy as np
 import cv2
-import argparse
-import imutils as im
-
-
-import matplotlib.pyplot as plt
-from skimage.measure import label, regionprops, regionprops_table
-import matplotlib.patches as mpatches
-from scipy.spatial import distance
-from imutils import grab_contours
 import pytesseract
-from PIL import Image
 from numpy import dot, exp, mgrid, pi, ravel, square, uint8, zeros
 from itertools import product
 
 
-
 class Canny:
 
-    def grayscale(self, image):
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        return image
+    def grayscale(self,image):
 
-    # def grayscale(self, image):
-    #     for i in range(image.shape[0]):
-    #         for j in range(image.shape[1]):
-    #             (r,g,b) = image[i][j]
+        # Transformam toti pixelii in pixeli gray
+        r, g, b = image[:,:,0], image[:,:,1], image[:,:,2]
+        gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
 
-    #             gray = (r * 0.299 + g * 0.587 + b * 0.114)
-
-    #             image[i][j] = (gray, gray, gray)
-
-    #     image = image.astype('uint8')
-    #     return image
+        return gray
 
 
     def gen_gaussian_kernel(self, k_size, sigma):
@@ -156,7 +134,6 @@ class Canny:
                 if image[i, j] >= value_to_compare:
                     suppressed[i, j] = image[i, j]
 
-        # 
         suppressed = np.multiply(suppressed, 255.0 / suppressed.max())
 
 
@@ -227,10 +204,9 @@ class Canny:
     def ocr(self, ROI):
 
         nr_inmatriculare = pytesseract.image_to_string(ROI)
-        print(nr_inmatriculare)
         return nr_inmatriculare
 
-    def find_contours(self, image, new_image):
+    def find_contours(self, image, new_image, show=True):
         imagecontours, _ = cv2.findContours(new_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         imagecontours = sorted(imagecontours, key=cv2.contourArea, reverse=True)[:20]
 
@@ -246,25 +222,27 @@ class Canny:
                 ROI = image[y:y+h, x:x+w]
 
                 # TODO: De pus o conditie de ratia rectangulara
+                if show:
+                    cv2.imshow('INMATRICULARE',ROI)
+                    cv2.waitKey()
 
-                cv2.imshow('INMATRICULARE',ROI)
-                cv2.waitKey()
-
-                # extragem folosind ocr
+                # extragem folosind OCR
                 current_plate_number = self.ocr(ROI)
                 nr_inmatriculare.append(current_plate_number)
 
-                cv2.drawContours(image, [approximations], 0, (0,255,0), 2)
-                cv2.putText(image, "NR. INMATRICULARE: " + current_plate_number, (i, j), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+                if show:
+                    cv2.drawContours(image, [approximations], 0, (0,255,0), 2)
+                    cv2.putText(image, "NR. INMATRICULARE: " + current_plate_number, (i, j), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
         
         #displaying the resulting image as the output on the screen
-        cv2.imshow("Resulting_image", image)
-        cv2.waitKey(0)
+        if show:
+            cv2.imshow("Resulting_image", image)
+            cv2.waitKey(0)
 
         return nr_inmatriculare
 
 
-    def extract_plate_number(self, image):
+    def extract_plate_number(self, image, show=True):
 
         # Generam imaginea folosind canny
         new_image = self.canny(image, 0, 50)
@@ -273,8 +251,9 @@ class Canny:
         # Ca sa arate bine pe imshow
         new_image = new_image.astype(np.uint8)
 
-        cv2.imshow("Sobel Image", new_image)
-        cv2.waitKey(0)
+        if show:
+            cv2.imshow("Sobel Image", new_image)
+            cv2.waitKey(0)
 
         # Returnam si afisam numarul de inamtriculare
-        return self.find_contours(image, new_image)
+        return self.find_contours(image, new_image, show)
