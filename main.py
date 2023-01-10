@@ -20,7 +20,7 @@ if __name__ == "__main__":
     canny = Canny()
 
     # Extragem numarul din poza prelucrata
-    plate_number = canny.extract_plate_number(image, show=True)
+    plate_number = canny.extract_plate_number(image, show=True, replace=False)
 
     # Printam numarul
     print(plate_number)

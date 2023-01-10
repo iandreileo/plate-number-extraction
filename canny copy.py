@@ -222,7 +222,7 @@ class Canny:
         nr_inmatriculare = pytesseract.image_to_string(ROI)
         return nr_inmatriculare
 
-    def find_contours(self, image, new_image, show=True, replace=False):
+    def find_contours(self, image, new_image, show=True):
         imagecontours, _ = cv2.findContours(new_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         imagecontours = sorted(imagecontours, key=cv2.contourArea, reverse=True)[:20]
 
@@ -234,43 +234,47 @@ class Canny:
             #the name of the detected shapes are written on the image
             i, j = approximations[0][0] 
             if len(approximations) == 4:
-
-                # Extragem coordonatele numarului
                 x,y,w,h = cv2.boundingRect(count)
                 ROI = image[y:y+h, x:x+w]
 
-                # Afisam imaginea binarizata pentru test
-                if show and len(nr_inmatriculare) == 0:
+                if show:
                     cv2.imshow('INMATRICULARE',(self.binarize_image(ROI)).astype(np.uint8))
                     cv2.waitKey()
 
                 # extragem folosind OCR
-                # din imaginea binarizata (cu literele/cifrele negre si restul alb)
+                # TODO: De facut binarizare inainte de OCr
+                # Ce e negru negru, restul altfel
                 current_plate_number = self.ocr((self.binarize_image(ROI)).astype(np.uint8))
+
+                # Test
+                imagecontours_1, _ = cv2.findContours((self.binarize_image(ROI)).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                imagecontours_1 = sorted(imagecontours_1, key=lambda ctr: cv2.boundingRect(ctr)[0])[:20]
+
+                for count in imagecontours_1:
+                    if len(approximations) == 4:
+                        x,y,w,h = cv2.boundingRect(count)
+                        if (h > w):
+                            ROI_CURRENT = ROI[y:y+h, x:x+w]
+
+                            if show:
+                                cv2.imshow('INMATRICULARE',ROI_CURRENT)
+                                cv2.waitKey()
+
                 nr_inmatriculare.append(current_plate_number)
 
-                # Daca parametrul de replace e setat pe true
-                # Afisam imaginea cu numarul extras, iar in loc de numar punem alb
-                if replace:
-                    new_image = image.copy()
-                    cv2.drawContours(new_image, [approximations], 0, (255,255,255), cv2.FILLED)
-                    cv2.imshow("IMAGINE FARA NUMAR", new_image)
-                    cv2.waitKey(0)
-                
-                # Afisam numarul mapat pe imagine
-                if show and len(nr_inmatriculare) == 1:
+                if show:
                     cv2.drawContours(image, [approximations], 0, (0,255,0), 2)
-                    cv2.putText(image, "NR. INMATRICULARE " + current_plate_number, (i, j), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
+                    cv2.putText(image, "NR. INMATRICULARE: " + current_plate_number, (i, j), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,0), 2)
         
         #displaying the resulting image as the output on the screen
         if show:
             cv2.imshow("IMAGINE MAPATA", image)
             cv2.waitKey(0)
 
-        return nr_inmatriculare[0]
+        return nr_inmatriculare
 
 
-    def extract_plate_number(self, image, show=True, replace=True):
+    def extract_plate_number(self, image, show=True):
 
         # Generam imaginea folosind canny
         new_image = self.canny(image, 0, 50)
@@ -284,6 +288,6 @@ class Canny:
             cv2.waitKey(0)
 
         # Returnam si afisam numarul de inamtriculare
-        return self.find_contours(image, new_image, show, replace)
+        return self.find_contours(image, new_image, show)
 
 
